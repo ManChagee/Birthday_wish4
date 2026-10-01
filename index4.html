@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A birthday wish for you 💌</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#ffe0ec;--bg2:#ffc9dd;--ink:#7a2a55;--soft:#b0527f;--rose:#ff5c9d;--blush:#ffb3d1;--card:rgba(255,255,255,.85);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#3a1530;--bg2:#2a0f24;--ink:#ffe3f0;--soft:#ffb8d6;--card:rgba(255,255,255,.1)}}
+:root[data-theme="dark"]{--bg1:#3a1530;--bg2:#2a0f24;--ink:#ffe3f0;--soft:#ffb8d6;--card:rgba(255,255,255,.1)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Quicksand',system-ui,sans-serif;font-weight:500;color:var(--ink);background:radial-gradient(circle at 20% 10%,var(--bg1),var(--bg2));background-color:var(--bg2);text-align:center;overflow-x:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:6}
+.petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.petals i{position:absolute;top:-40px;font-style:normal;animation:fall linear infinite}
+section{max-width:460px;min-height:100vh;margin:0 auto;padding:30px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative;z-index:2}
+[hidden]{display:none!important}
+.big{font-size:4.2rem;animation:bob 2.4s ease-in-out infinite}
+h1,h2{font-family:'Pacifico',cursive;font-weight:400;color:var(--rose);margin:0;line-height:1.25;text-shadow:0 3px 0 rgba(255,255,255,.7)}
+h1{font-size:clamp(1.8rem,8.5vw,2.4rem)}
+h2{font-size:clamp(2rem,10vw,2.9rem);word-break:break-word}
+p{margin:0}
+.sub{color:var(--soft)}
+form{display:flex;flex-direction:column;gap:12px;width:100%;align-items:center}
+input{font:inherit;font-size:1.1rem;text-align:center;color:var(--ink);background:var(--card);border:2px dashed var(--rose);border-radius:99px;padding:13px 18px;width:100%;max-width:290px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--rose);outline-offset:3px}
+button{font:inherit;cursor:pointer;border:0;color:#fff;font-weight:700;font-size:1.1rem;background:linear-gradient(135deg,#ff7eb3,var(--rose));padding:14px 28px;border-radius:99px;box-shadow:0 6px 0 #d13f7d;-webkit-tap-highlight-color:transparent}
+button:active{transform:translateY(4px);box-shadow:0 2px 0 #d13f7d}
+button.alt{background:var(--card);color:var(--rose);border:2px solid var(--blush);box-shadow:0 6px 0 var(--blush)}
+button.alt:active{box-shadow:0 2px 0 var(--blush)}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.err{color:var(--rose);min-height:1.2em;font-size:.95rem}
+.letter{background:var(--card);border:2px solid var(--blush);border-radius:28px;padding:22px 20px;box-shadow:0 12px 30px rgba(255,92,157,.2);display:flex;flex-direction:column;gap:12px;font-size:1.1rem;line-height:1.55;width:100%}
+.letter p{opacity:0;animation:rise .7s ease forwards}
+.letter b{color:var(--rose)}
+.sign{font-family:'Pacifico',cursive;color:var(--rose);font-size:1.25rem}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<div class="petals" id="petals" aria-hidden="true"></div>
+
+<!-- STEP 1: the visitor (the birthday girl) types her own name -->
+<section id="ask">
+  <div class="big" aria-hidden="true">💌</div>
+  <h1>Hello!!!!</h1>
+  <p class="sub">I made a little surprise for you. What's your name?</p>
+  <form id="form">
+    <input id="name" maxlength="20" placeholder="Your name" autocomplete="given-name" aria-label="Your name" required>
+    <p class="err" id="err" role="alert"></p>
+    <button type="submit">Open my wish 🎀</button>
+  </form>
+</section>
+
+<!-- STEP 2: the wish, with her name in it -->
+<section id="wish" hidden>
+  <h2 id="title"></h2>
+  <div class="letter" id="letter" aria-live="polite"></div>
+  <div class="btns">
+    <button id="again" type="button">More confetti 🎉</button>
+    <button id="music" type="button" class="alt">🎵 Pause song</button>
+  </div>
+</section>
+
+<script>
+/* ✏️ EDIT HERE: put YOUR name between the quotes, or leave '' to sign without a name.
+   You can also add ?from=YourName to the link instead. */
+var FROM='';
+
+/* ✏️ EDIT HERE: the wish. {name} turns into the name the visitor typed. */
+var lines=[
+ 'Today the world celebrates you, {name}, and honestly, it should.',
+ 'You make every day brighter just by being you. Your smile is my favorite thing to see. ',
+ 'I hope you\'re having a good day, {name}. You deserve all of it. ',
+];
+
+/* ✏️ EDIT HERE: the sign-off at the bottom of the wish. */
+var SIGN='Wishing you the best in life';
+
+/* 🎵 SONG: by default the page plays a music-box "Happy Birthday" (no file needed).
+   To use your own song instead, put the audio file in the same folder as this page
+   and write its name here, for example: var SONG_FILE='song.mp3'; */
+var SONG_FILE='';
+
+(function(){
+var $=function(i){return document.getElementById(i)};
+var cv=$('c'),ctx=cv.getContext('2d'),P=[],run=false;
+var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var bits=['🌸','🌷','🌹','💖','🌺','✨','💗','🎀'],cols=['#ff5c9d','#ffb3d1','#ffd95e','#fff','#ff8fba'];
+function size(){var d=devicePixelRatio||1;cv.width=innerWidth*d;cv.height=innerHeight*d;ctx.setTransform(d,0,0,d,0,0)}
+size();addEventListener('resize',size);
+function burst(x,y,n,spread){
+  n=calm?Math.round(n/4):n;
+  for(var i=0;i<n;i++){
+    var a=-Math.PI/2+(Math.random()-.5)*spread,s=5+Math.random()*10,em=i%3!==0;
+    P.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:Math.random()*6,vr:(Math.random()-.5)*.25,em:em,t:bits[i%bits.length],c:cols[i%cols.length],z:em?16+Math.random()*14:6+Math.random()*6,l:0});
+  }
+  if(!run){run=true;requestAnimationFrame(tick)}
+}
+function tick(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  for(var i=P.length-1;i>=0;i--){
+    var p=P[i];p.vy+=.25;p.vx*=.99;p.vy*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l++;
+    if(p.y>innerHeight+40||p.l>280){P.splice(i,1);continue}
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=Math.min(1,(280-p.l)/60);
+    if(p.em){ctx.font=p.z+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.t,0,0)}
+    else{ctx.fillStyle=p.c;ctx.fillRect(-p.z/2,-p.z/3,p.z,p.z*.6)}
+    ctx.restore();
+  }
+  if(P.length)requestAnimationFrame(tick);else{run=false;ctx.clearRect(0,0,innerWidth,innerHeight)}
+}
+function shower(){burst(innerWidth*.12,innerHeight,40,1.2);burst(innerWidth*.88,innerHeight,40,1.2);burst(innerWidth/2,innerHeight*.9,60,1.8)}
+
+var pe=$('petals');
+if(!calm)for(var i=0;i<14;i++){var e=document.createElement('i');e.textContent=['🌸','🌸','🌷','🌺'][i%4];
+e.style.left=Math.random()*100+'%';e.style.fontSize=(14+Math.random()*14)+'px';e.style.opacity=.55+Math.random()*.4;
+e.style.animationDuration=(9+Math.random()*9)+'s';e.style.animationDelay=(-Math.random()*14)+'s';pe.appendChild(e)}
+
+/* ---------- Music ---------- */
+var F={G4:392,A4:440,B4:493.88,C5:523.25,D5:587.33,E5:659.25,F5:698.46,G5:783.99};
+/* [note, beats] - "Happy Birthday to You" */
+var tune=[
+ ['G4',.75],['G4',.25],['A4',1],['G4',1],['C5',1],['B4',2],
+ ['G4',.75],['G4',.25],['A4',1],['G4',1],['D5',1],['C5',2],
+ ['G4',.75],['G4',.25],['G5',1],['E5',1],['C5',1],['B4',1],['A4',1],
+ ['F5',.75],['F5',.25],['E5',1],['C5',1],['D5',1],['C5',2]
+];
+var BEAT=.55,AC=null,master=null,audioEl=null,playing=false,endTimer=null,mb=$('music');
+function setLabel(){mb.textContent=playing?'🎵 Pause song':'🎵 Play song'}
+function stopSong(){
+  playing=false;clearTimeout(endTimer);
+  if(master){try{master.disconnect()}catch(e){}master=null}
+  if(audioEl){audioEl.pause();audioEl.currentTime=0}
+  setLabel();
+}
+function playSong(){
+  stopSong();
+  try{
+    if(SONG_FILE){
+      if(!audioEl)audioEl=new Audio(SONG_FILE);
+      audioEl.play();playing=true;audioEl.onended=function(){playing=false;setLabel()};
+    }else{
+      var AC0=window.AudioContext||window.webkitAudioContext;
+      if(!AC)AC=new AC0();
+      if(AC.state==='suspended')AC.resume();
+      master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+      var t=AC.currentTime+.15,total=0;
+      tune.forEach(function(n){
+        var f=F[n[0]],d=n[1]*BEAT;
+        [[f,.28,'sine'],[f*2,.07,'triangle']].forEach(function(v){
+          var o=AC.createOscillator(),g=AC.createGain();
+          o.type=v[2];o.frequency.value=v[0];
+          g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v[1],t+.012);
+          g.gain.exponentialRampToValueAtTime(.001,t+d*1.7);
+          o.connect(g);g.connect(master);o.start(t);o.stop(t+d*1.8);
+        });
+        t+=d;total+=d;
+      });
+      playing=true;endTimer=setTimeout(function(){playing=false;setLabel()},(total+1)*1000);
+    }
+  }catch(e){playing=false}
+  setLabel();
+}
+mb.onclick=function(){playing?stopSong():playSong()};
+
+/* ---------- The wish ---------- */
+var from=FROM;
+try{var q=new URLSearchParams(location.search).get('from');if(q)from=q.trim().slice(0,20)}catch(e){}
+
+function show(name){
+  $('title').textContent='Happy Birthday, '+name+'! 🎂';
+  var L=$('letter');L.textContent='';
+  lines.forEach(function(t,i){
+    var p=document.createElement('p'),parts=t.split('{name}');
+    parts.forEach(function(s,k){p.appendChild(document.createTextNode(s));if(k<parts.length-1){var b=document.createElement('b');b.textContent=name;p.appendChild(b)}});
+    p.style.animationDelay=(0.4+i*0.9)+'s';L.appendChild(p);
+  });
+  var s=document.createElement('p');s.className='sign';
+  s.textContent=from?SIGN+', '+from+' 💕':SIGN+' 💕';
+  s.style.animationDelay=(0.4+lines.length*0.9)+'s';L.appendChild(s);
+  $('ask').hidden=true;$('wish').hidden=false;scrollTo(0,0);
+  playSong();
+  setTimeout(shower,250);setTimeout(shower,1600);
+}
+$('form').addEventListener('submit',function(ev){
+  ev.preventDefault();
+  var n=$('name').value.trim();
+  if(!n){$('err').textContent='Tell me your name first 🌸';$('name').focus();return}
+  $('err').textContent='';
+  show(n);
+});
+$('again').onclick=shower;
+})();
+</script>
+</body>
+</html>
